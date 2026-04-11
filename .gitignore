@@ -1,0 +1,90 @@
+# =============================================
+# PYTHON
+# =============================================
+
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Uvicorn / FastAPI logs
+*.log
+logs/
+
+# Environment variables (NEVER commit these)
+.env
+.env.local
+.env.*.local
+.env.production
+
+# SQLAlchemy / Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Ruff / Linters
+.ruff_cache/
+
+# =============================================
+# FRONTEND (Plain HTML/CSS/JS)
+# =============================================
+
+# Node modules (if any npm packages are used)
+node_modules/
+
+# Build output (if you minify/bundle manually)
+static/dist/
+static/build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.backu
+debug/

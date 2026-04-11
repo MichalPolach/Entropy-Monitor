@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Entropy Monitor — single-page dashboard.
+
+  Layout:
+    1. Header   – project title, live connection badge, last-updated stamp.
+    2. Metrics  – four responsive cards (CPU, RAM, Disk, Power) with
+                  animated progress bars.
+    3. Procs    – "Resource Hogs" table filled dynamically by app.js.
+    4. Footer   – attribution line.
+
+  Styling relies on Tailwind CSS (CDN) and JetBrains Mono from Google Fonts.
+  All dynamic content is injected by app.js. This file is purely structural markup.
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entropy Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        body { font-family: 'JetBrains Mono', monospace; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen p-8">
+
+    <div class="max-w-6xl mx-auto">
+
+        <!-- ====== Header — title + live status indicator ====== -->
+        <header class="flex justify-between items-center mb-12 border-b border-slate-800 pb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-indigo-400">Entropy Monitor</h1>
+                <p class="text-slate-500 text-sm">Real-time system telemetry</p>
+            </div>
+            <div class="text-right">
+                <div id="status-indicator" class="flex items-center justify-end gap-2 text-xs uppercase tracking-widest text-slate-500">
+                    <!-- Animated ping dot - decorative status LED -->
+                    <span class="relative flex h-3 w-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-slate-500"></span>
+                    </span>
+                    System Status: <span id="conn-status">Connecting...</span>
+                </div>
+                <p id="last-updated" class="text-xs text-slate-600 mt-1">Last updated: Never</p>
+            </div>
+        </header>
+
+        <!-- ====== Metric cards — 4-column responsive grid ====== -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+            <!-- CPU card -->
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 class="text-slate-400 text-sm font-medium uppercase">CPU Usage</h2>
+                    <span class="text-indigo-500">🧠</span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="cpu-val" class="text-5xl font-bold text-white">0%</span>
+                </div>
+                <div class="mt-4 w-full bg-slate-800 rounded-full h-2">
+                    <div id="cpu-bar" class="h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Memory (RAM) card -->
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 class="text-slate-400 text-sm font-medium uppercase">Memory (RAM)</h2>
+                    <span class="text-indigo-500">💾</span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="mem-percent-val" class="text-5xl font-bold text-white">0%</span>
+                </div>
+                <div class="mt-4 w-full bg-slate-800 rounded-full h-2">
+                    <div id="mem-bar" class="bg-indigo-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="mt-3 flex justify-between text-xs text-slate-500">
+                    <span>Used: <span id="mem-used-val">0</span> GB</span>
+                    <span>Total: <span id="mem-total-val">0</span> GB</span>
+                </div>
+            </div>
+
+            <!-- Disk storage card -->
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 class="text-slate-400 text-sm font-medium uppercase">Disk Storage</h2>
+                    <span class="text-indigo-500">🗃️</span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="disk-percent-val" class="text-5xl font-bold text-white">0%</span>
+                </div>
+                <div class="mt-4 w-full bg-slate-800 rounded-full h-2">
+                    <div id="disk-bar" class="bg-indigo-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="mt-3 flex justify-between text-xs text-slate-500">
+                    <span>Free: <span id="disk-free-val">0</span> GB</span>
+                    <span>Total: <span id="disk-total-val">0</span> GB</span>
+                </div>
+            </div>
+
+            <!-- Power draw card (battery laptops only) -->
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 class="text-slate-400 text-sm font-medium uppercase">Power Usage</h2>
+                    <span class="text-indigo-500">⚡️</span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span id="power-val" class="text-5xl font-bold text-white">0</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ====== Top processes table ====== -->
+        <div class="mt-8 bg-gray-800 p-6 rounded-xl border border-gray-700">
+            <h2 class="text-xl font-bold mb-4 text-white">Resource Hogs</h2>
+            <table class="w-full text-left text-gray-300">
+                <thead>
+                    <tr class="border-b border-gray-700">
+                        <th class="py-2">PID</th>
+                        <th class="py-2">Name</th>
+                        <th class="py-2 text-right">CPU %</th>
+                        <th class="py-2 text-right">Memory (MB)</th>
+                    </tr>
+                </thead>
+                <!-- Rows are injected by app.js on each poll cycle -->
+                <tbody id="process-table">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ====== Footer ====== -->
+        <footer class="mt-12 text-center text-slate-600 text-xs">
+            Built by Michal Polach | Powered by FastAPI & Vanilla JS
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
