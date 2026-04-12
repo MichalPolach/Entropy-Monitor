@@ -5,23 +5,24 @@ Exposes a single REST endpoint (GET /stats) that returns real-time system
 telemetry (CPU, RAM, disk, power draw, top processes) as JSON.  Designed to
 be consumed by the companion vanilla-JS dashboard served separately.
 
-Run with:
-    uvicorn main:app --port 8003 --reload
+Run development server with:
+    uvicorn main:app --port 8000 --reload
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from config import settings
 from monitor import Monitor
 import schemas
 
-app = FastAPI(title="System Monitor", description="System Monitor API")
+app = FastAPI(
+    title=settings.app_title,
+    description=settings.app_description
+)
 
 # Allowed origins must match however the frontend is served; the dashboard
-# defaults to port 8085 during local development.
-origins = [
-    "http://localhost:8085",
-    "http://127.0.0.1:8085",
-]
+# defaults to port 8080 during local development.
+origins = settings.cors_origins.split(",") if isinstance(settings.cors_origins, str) else settings.cors_origins
 
 app.add_middleware(
     CORSMiddleware,

@@ -110,7 +110,7 @@ async function updateStats() {
         conn_status.style.color = "green"
         last_updated.textContent = `Last updated: ${date.getHours()}:${date.getMinutes()}`
 
-        processTable.innerHTML = '';
+        process_table.innerHTML = '';
         const rows = data.top_processes.map(proc => `
             <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors">
                 <td class="py-2">${proc.pid}</td>
@@ -119,7 +119,7 @@ async function updateStats() {
                 <td class="py-2 text-right">${proc.memory_mb.toFixed(1)} MB</td>
             </tr>
         `).join('');
-        processTable.innerHTML = rows;
+        process_table.innerHTML = rows;
 
     } catch (error) {
         console.error("Error fetching records:", error);
