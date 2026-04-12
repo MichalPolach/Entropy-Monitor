@@ -1,9 +1,11 @@
 /**
  * Entropy Monitor — client-side polling & DOM updater.
  *
- * Fetches JSON from the FastAPI backend every 6 seconds and renders the
- * values into the dashboard cards, progress bars, and process table
- * defined in index.html.
+ * On load, fetches runtime configuration from the backend's /config
+ * endpoint (base URL + poll interval) so nothing is hard-coded here.
+ * Then enters a polling loop that fetches /stats at the configured
+ * interval and renders values into the dashboard cards, progress bars,
+ * and process table defined in index.html.
  *
  * Colour thresholds for progress bars:
  *   - indigo  (≤ 60 %)  — healthy
@@ -37,8 +39,73 @@ const last_updated = document.getElementById('last-updated');
 
 const process_table = document.getElementById('process-table');
 
-/** Base URL of the FastAPI backend */
-url = "http://127.0.0.1:8003"
+const cpu_chart_canvas = document.getElementById('cpu-chart');
+
+const cpu_chart = new Chart(cpu_chart_canvas, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'CPU Usage %',
+            data: [],
+            borderColor: 'rgb(99, 102, 241)',
+            tension: 0.4
+        }]
+    },
+    options: {
+        animation: false,
+        scales: {
+            y: {
+                min: 0,
+                max: 100,
+                // maybe add a grid color to match your dark theme!
+            },
+            x: {
+                display: false // Hide the timestamps on the bottom for a cleaner look
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+/**
+ * Bootstrap URL — the only hard-coded address in the frontend.
+ * Points to the backend's /config endpoint which returns the actual
+ * base URL and poll interval for all subsequent requests.
+ */
+const initial_url = "http://127.0.0.1:8003/config"
+
+/** Mutable runtime configuration, overwritten by init() on startup. */
+let config = {
+    url: "",
+    poll_interval: 6000
+}
+
+/**
+ * Fetch runtime settings from the backend and start the polling loop.
+ *
+ * Retrieves the API base URL and poll interval from /config so the
+ * rest of the client never relies on hard-coded values.  On failure
+ * (e.g. backend unreachable) the error is logged and no polling starts.
+ */
+async function init() {
+    try {
+        const response = await fetch(initial_url);
+        const server_config = await response.json();
+
+        config.url = server_config.url;
+        config.poll_interval = server_config.poll_interval;
+
+        update_stats(config.url);
+        setInterval(() => update_stats(config.url), config.poll_interval);
+    } catch (e) {
+        console.error("Failed to load config", e);
+    }
+}
 
 /* ------------------------------------------------------------------ */
 /*  Utility helpers                                                    */
@@ -70,34 +137,59 @@ function setColor(element, data) {
     element.classList.add(current_color)
 }
 
+function addChartData(chart, timeLabel, chartData) {
+    // Add the time to the labels array (X-axis)
+    chart.data.labels.push(timeLabel);
+
+    // Add the data to the data array (Y-axis)
+    // .datasets[0] grabs the first (and only) dataset in your array
+    chart.data.datasets[0].data.push(chartData);
+
+    // If we have more than 20 points, remove the oldest one
+    if (chart.data.labels.length > 20) {
+        chart.data.labels.shift(); // Removes oldest label
+        chart.data.datasets[0].data.shift(); // Removes oldest data
+    }
+
+    // Tell Chart.js to redraw the graph!
+    chart.update();
+}
+
 /* ------------------------------------------------------------------ */
 /*  Core polling loop                                                  */
 /* ------------------------------------------------------------------ */
 
 /**
- * Fetch the latest ``/stats`` payload from the API and paint every
+ * Fetch the latest /stats payload from the API and paint every
  * dashboard widget.
  *
  * On success the connection badge turns green ("Online") and a
- * timestamp is shown.  On failure it turns red ("Offline") and the
- * error is logged to the browser console.
+ * human-readable timestamp is shown.  On failure it turns red
+ * ("Offline") and the error is logged to the browser console.
+ *
+ * @param {string} url - Backend base URL (scheme + host + port).
  */
-async function updateStats() {
+async function update_stats(url) {
     try {
         const response = await fetch(`${url}/stats`)
         const data = await response.json();
         const date = new Date();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
 
         cpu.textContent = `${data.cpu}%`
         cpu_bar.style.width = `${data.cpu}%`
         setColor(cpu_bar, data.cpu)
+        addChartData(cpu_chart, `${hours}:${minutes}`, data.cpu)
 
         memory_used.textContent = `${data.memory_used.toFixed(1)}`
+        memory_available.textContent = `${data.memory_available.toFixed(1)}`
         memory_total.textContent = `${data.memory_total.toFixed(1)}`
         memory_percent.textContent = `${data.memory_percent}%`
         memory_bar.style.width = `${data.memory_percent}%`
         setColor(memory_bar, data.memory_percent)
 
+        disk_used.textContent = `${data.disk_used.toFixed(1)}`
         disk_free.textContent = `${data.disk_free.toFixed(1)}`
         disk_total.textContent = `${data.disk_total.toFixed(1)}`
         disk_percent.textContent = `${data.disk_percent}%`
@@ -108,7 +200,7 @@ async function updateStats() {
 
         conn_status.textContent = "Online"
         conn_status.style.color = "green"
-        last_updated.textContent = `Last updated: ${date.getHours()}:${date.getMinutes()}`
+        last_updated.textContent = `Last updated: ${hours}:${minutes}`
 
         process_table.innerHTML = '';
         const rows = data.top_processes.map(proc => `
@@ -128,6 +220,5 @@ async function updateStats() {
     }
 }
 
-/* Kick off the first fetch immediately, then repeat every 6 seconds */
-updateStats()
-setInterval(updateStats, 6000);
+/* Bootstrap: fetch config, then enter the polling loop. */
+init();

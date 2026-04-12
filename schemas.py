@@ -1,5 +1,5 @@
 """
-Pydantic response models for the ``/stats`` endpoint.
+Pydantic response models for the API endpoints.
 
 These schemas serve double duty:
 
@@ -11,6 +11,22 @@ These schemas serve double duty:
 
 from pydantic import BaseModel
 from typing import List
+
+
+class ConfigStats(BaseModel):
+    """Payload returned by ``GET /config``.
+
+    Supplies the JS frontend with the information it needs to locate the
+    API and schedule its polling loop, so nothing is hard-coded client-side.
+
+    Attributes:
+        url:           Fully-qualified backend base URL
+                       (e.g. ``http://localhost:8000``).
+        poll_interval: Recommended polling interval in milliseconds.
+    """
+
+    url: str
+    poll_interval: int
 
 
 class ProcessStats(BaseModel):

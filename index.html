@@ -18,6 +18,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entropy Monitor</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         body { font-family: 'JetBrains Mono', monospace; }
@@ -77,6 +78,7 @@
                 </div>
                 <div class="mt-3 flex justify-between text-xs text-slate-500">
                     <span>Used: <span id="mem-used-val">0</span> GB</span>
+                    <span>Available: <span id="mem-available-val">0</span> GB</span>
                     <span>Total: <span id="mem-total-val">0</span> GB</span>
                 </div>
             </div>
@@ -94,6 +96,7 @@
                     <div id="disk-bar" class="bg-indigo-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
                 <div class="mt-3 flex justify-between text-xs text-slate-500">
+                    <span>Used: <span id="disk-used-val">0</span> GB</span>
                     <span>Free: <span id="disk-free-val">0</span> GB</span>
                     <span>Total: <span id="disk-total-val">0</span> GB</span>
                 </div>
@@ -111,6 +114,20 @@
             </div>
 
         </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- CPU History Chart Card -->
+            <div class="mt-8 bg-gray-800 p-6 rounded-xl border border-gray-700">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-white">CPU History</h2>
+                    <span class="text-xs text-gray-400 uppercase tracking-wider">Last 60 Seconds</span>
+                </div>
+                <div class="relative h-32 w-full">
+                    <canvas id="cpu-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
 
         <!-- ====== Top processes table ====== -->
         <div class="mt-8 bg-gray-800 p-6 rounded-xl border border-gray-700">

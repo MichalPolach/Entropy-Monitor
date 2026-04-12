@@ -1,11 +1,19 @@
 """
 Entropy Monitor — FastAPI backend entry point.
 
-Exposes a single REST endpoint (GET /stats) that returns real-time system
-telemetry (CPU, RAM, disk, power draw, top processes) as JSON.  Designed to
-be consumed by the companion vanilla-JS dashboard served separately.
+Exposes two REST endpoints:
+
+* ``GET /config`` — returns the backend URL and poll interval so the
+  frontend can self-configure without hard-coded constants.
+* ``GET /stats``  — returns real-time system telemetry (CPU, RAM, disk,
+  power draw, top processes) as JSON.
+
+All tuneable values (CORS origins, ports, poll interval, etc.) are read
+from ``config.Settings`` which in turn loads from environment variables
+or a ``.env`` file.
 
 Run development server with:
+
     uvicorn main:app --port 8000 --reload
 """
 
@@ -20,9 +28,9 @@ app = FastAPI(
     description=settings.app_description
 )
 
-# Allowed origins must match however the frontend is served; the dashboard
-# defaults to port 8080 during local development.
-origins = settings.cors_origins.split(",") if isinstance(settings.cors_origins, str) else settings.cors_origins
+# Split the comma-separated string from config into a list for the
+# CORS middleware; must match the origin(s) the frontend is served from.
+origins = settings.cors_origins.split(",")
 
 app.add_middleware(
     CORSMiddleware,
@@ -34,6 +42,18 @@ app.add_middleware(
 
 monitor = Monitor()
 
+@app.get("/config", response_model=schemas.ConfigStats)
+def get_config():
+    """Return runtime configuration the frontend needs to operate.
+
+    The response contains the fully-qualified backend URL (scheme + host
+    + port) and the recommended polling interval in milliseconds.  This
+    lets the JS client self-configure instead of hard-coding addresses.
+    """
+    return {
+        "url": f"{settings.backend_address}:{settings.backend_port}",
+        "poll_interval": settings.poll_interval_ms,
+    }
 
 @app.get("/stats", response_model=schemas.SystemStats)
 def read_stats():
