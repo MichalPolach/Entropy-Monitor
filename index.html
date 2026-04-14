@@ -4,14 +4,19 @@
   Entropy Monitor — single-page dashboard.
 
   Layout:
-    1. Header   – project title, live connection badge, last-updated stamp.
-    2. Metrics  – four responsive cards (CPU, RAM, Disk, Power) with
-                  animated progress bars.
-    3. Procs    – "Resource Hogs" table filled dynamically by app.js.
-    4. Footer   – attribution line.
+    1. Header     – project title, live connection badge, last-updated stamp.
+    2. Metrics    – six cards in a 3-column grid (CPU, Memory, Disk,
+                    Power, CPU Temp, NVMe Temp) with progress bars where
+                    applicable.
+    3. Charts     – rolling line graphs for CPU, Memory, and Power history
+                    (powered by Chart.js via CDN).
+    4. Processes  – "Resource Hogs" table filled dynamically by app.js.
+    5. Footer     – attribution line.
 
-  Styling relies on Tailwind CSS (CDN) and JetBrains Mono from Google Fonts.
-  All dynamic content is injected by app.js. This file is purely structural markup.
+  All cards share a unified slate-900/slate-800 colour palette with
+  rounded-2xl corners.  Styling relies on Tailwind CSS (CDN) and
+  JetBrains Mono from Google Fonts.  All dynamic content is injected by
+  app.js — this file is purely structural markup.
 -->
 <head>
     <meta charset="UTF-8">
@@ -47,8 +52,8 @@
             </div>
         </header>
 
-        <!-- ====== Metric cards — 4-column responsive grid ====== -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- ====== Metric cards — 3-column responsive grid ====== -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
             <!-- CPU card -->
             <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
@@ -113,28 +118,76 @@
                 </div>
             </div>
 
+            <!-- CPU Temperature card -->
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 class="text-slate-400 text-sm font-medium uppercase">CPU Temperature</h2>
+                    <span class="text-indigo-500">🌡️</span>
+                </div>
+                <div class="flex items-baseline gap-1">
+                    <span id="cpu-temp-val" class="text-5xl font-bold text-white">--</span>
+                    <span class="text-lg text-slate-400">°C</span>
+                </div>
+            </div>
+
+            <!-- NVMe Temperature card -->
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 class="text-slate-400 text-sm font-medium uppercase">NVMe Temperature</h2>
+                    <span class="text-indigo-500">🌡️</span>
+                </div>
+                <div class="flex items-baseline gap-1">
+                    <span id="nvme-temp-val" class="text-5xl font-bold text-white">--</span>
+                    <span class="text-lg text-slate-400">°C</span>
+                </div>
+            </div>
+
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- ====== History charts — 3-column rolling line graphs ====== -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+
             <!-- CPU History Chart Card -->
-            <div class="mt-8 bg-gray-800 p-6 rounded-xl border border-gray-700">
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-xl font-bold text-white">CPU History</h2>
-                    <span class="text-xs text-gray-400 uppercase tracking-wider">Last 60 Seconds</span>
+                    <span class="text-xs text-slate-400 uppercase tracking-wider">Last 20 Samples</span>
                 </div>
                 <div class="relative h-32 w-full">
                     <canvas id="cpu-chart"></canvas>
                 </div>
             </div>
+
+            <!-- Memory History Chart Card -->
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-white">Memory History</h2>
+                    <span class="text-xs text-slate-400 uppercase tracking-wider">Last 20 Samples</span>
+                </div>
+                <div class="relative h-32 w-full">
+                    <canvas id="memory-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Power draw History Chart Card -->
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-white">Power History</h2>
+                    <span class="text-xs text-slate-400 uppercase tracking-wider">Last 20 Samples</span>
+                </div>
+                <div class="relative h-32 w-full">
+                    <canvas id="power-chart"></canvas>
+                </div>
+            </div>
+
         </div>
 
-
         <!-- ====== Top processes table ====== -->
-        <div class="mt-8 bg-gray-800 p-6 rounded-xl border border-gray-700">
+        <div class="mt-6 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
             <h2 class="text-xl font-bold mb-4 text-white">Resource Hogs</h2>
-            <table class="w-full text-left text-gray-300">
+            <table class="w-full text-left text-slate-300">
                 <thead>
-                    <tr class="border-b border-gray-700">
+                    <tr class="border-b border-slate-800">
                         <th class="py-2">PID</th>
                         <th class="py-2">Name</th>
                         <th class="py-2 text-right">CPU %</th>

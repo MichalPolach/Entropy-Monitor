@@ -59,12 +59,16 @@ def get_config():
 def read_stats():
     """Collect a snapshot of system metrics and return them in JSON format.
 
-    The two collection steps are intentionally separate: ``get_stats``
-    gathers scalar metrics (CPU %, RAM, disk, power) while
-    ``get_top_processes`` performs a two-pass CPU sample that requires a
-    short sleep, so keeping them decoupled makes future async conversion
-    straightforward.
+    The three collection steps are intentionally separate:
+
+    * ``get_stats`` — gathers scalar metrics (CPU %, RAM, disk, power).
+    * ``get_top_processes`` — performs a two-pass CPU sample that
+      requires a short sleep.
+    * ``get_temps`` — reads CPU and NVMe thermal sensors.
+
+    Keeping them decoupled makes future async conversion straightforward.
     """
     monitor.get_stats()
     monitor.get_top_processes()
+    monitor.get_temps()
     return monitor.statistics()

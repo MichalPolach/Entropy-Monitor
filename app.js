@@ -1,11 +1,12 @@
 /**
- * Entropy Monitor — client-side polling & DOM updater.
+ * Entropy Monitor — client-side polling, DOM updater, and chart renderer.
  *
  * On load, fetches runtime configuration from the backend's /config
  * endpoint (base URL + poll interval) so nothing is hard-coded here.
  * Then enters a polling loop that fetches /stats at the configured
  * interval and renders values into the dashboard cards, progress bars,
- * and process table defined in index.html.
+ * temperature readouts, rolling Chart.js line graphs, and process table
+ * defined in index.html.
  *
  * Colour thresholds for progress bars:
  *   - indigo  (≤ 60 %)  — healthy
@@ -37,39 +38,94 @@ const power_val = document.getElementById('power-val');
 const conn_status = document.getElementById('conn-status');
 const last_updated = document.getElementById('last-updated');
 
+const cpu_temp = document.getElementById('cpu-temp-val');
+const nvme_temp = document.getElementById('nvme-temp-val');
+
 const process_table = document.getElementById('process-table');
 
-const cpu_chart_canvas = document.getElementById('cpu-chart');
+/* ------------------------------------------------------------------ */
+/*  Chart.js instances — rolling line graphs (last 20 data points)     */
+/* ------------------------------------------------------------------ */
 
+const cpu_chart_canvas = document.getElementById('cpu-chart');
+const memory_chart_canvas = document.getElementById('memory-chart');
+const power_chart_canvas = document.getElementById('power-chart');
+
+/**
+ * Shared Chart.js options tuned for the dark slate dashboard theme.
+ * Tooltip styled to match slate-800 card backgrounds.
+ */
+const darkTooltip = {
+    backgroundColor: 'rgb(30, 41, 59)',
+    titleColor: 'rgb(226, 232, 240)',
+    bodyColor: 'rgb(148, 163, 184)',
+    borderColor: 'rgb(51, 65, 85)',
+    borderWidth: 1
+};
+
+function chartOptions(yMax) {
+    return {
+        animation: false,
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                min: 0,
+                max: yMax,
+                ticks: { color: 'rgb(148, 163, 184)' },
+                grid: { color: 'rgba(51, 65, 85, 0.5)' },
+                border: { display: false }
+            },
+            x: { display: false }
+        },
+        plugins: {
+            legend: { display: false },
+            tooltip: darkTooltip
+        }
+    };
+}
+
+function chartDataset(label, borderColor, bgColor) {
+    return {
+        label: label,
+        data: [],
+        borderColor: borderColor,
+        backgroundColor: bgColor,
+        fill: 'origin',
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 4
+    };
+}
+
+/** CPU usage history — indigo accent, Y-axis 0–100 %. */
 const cpu_chart = new Chart(cpu_chart_canvas, {
     type: 'line',
     data: {
         labels: [],
-        datasets: [{
-            label: 'CPU Usage %',
-            data: [],
-            borderColor: 'rgb(99, 102, 241)',
-            tension: 0.4
-        }]
+        datasets: [chartDataset('CPU Usage %', 'rgb(99, 102, 241)', 'rgba(99, 102, 241, 0.1)')]
     },
-    options: {
-        animation: false,
-        scales: {
-            y: {
-                min: 0,
-                max: 100,
-                // maybe add a grid color to match your dark theme!
-            },
-            x: {
-                display: false // Hide the timestamps on the bottom for a cleaner look
-            }
-        },
-        plugins: {
-            legend: {
-                display: false
-            }
-        }
-    }
+    options: chartOptions(100)
+});
+
+/** Memory usage history — emerald accent, Y-axis 0–100 %. */
+const memory_chart = new Chart(memory_chart_canvas, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [chartDataset('Memory Usage %', 'rgb(16, 185, 129)', 'rgba(16, 185, 129, 0.1)')]
+    },
+    options: chartOptions(100)
+});
+
+/** Power draw history — amber accent, Y-axis 0–50 W. */
+const power_chart = new Chart(power_chart_canvas, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [chartDataset('Power Usage W', 'rgb(245, 158, 11)', 'rgba(245, 158, 11, 0.1)')]
+    },
+    options: chartOptions(50)
 });
 
 /**
@@ -137,21 +193,24 @@ function setColor(element, data) {
     element.classList.add(current_color)
 }
 
+/**
+ * Append a data point to a Chart.js line graph and maintain a rolling
+ * window of at most 20 entries.  Older points are shifted off the left
+ * side so the chart always shows the most recent history.
+ *
+ * @param {Chart}  chart     - Chart.js instance to update.
+ * @param {string} timeLabel - Timestamp label for the X-axis.
+ * @param {number} chartData - Numeric value for the Y-axis.
+ */
 function addChartData(chart, timeLabel, chartData) {
-    // Add the time to the labels array (X-axis)
     chart.data.labels.push(timeLabel);
-
-    // Add the data to the data array (Y-axis)
-    // .datasets[0] grabs the first (and only) dataset in your array
     chart.data.datasets[0].data.push(chartData);
 
-    // If we have more than 20 points, remove the oldest one
     if (chart.data.labels.length > 20) {
-        chart.data.labels.shift(); // Removes oldest label
-        chart.data.datasets[0].data.shift(); // Removes oldest data
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
     }
 
-    // Tell Chart.js to redraw the graph!
     chart.update();
 }
 
@@ -188,6 +247,7 @@ async function update_stats(url) {
         memory_percent.textContent = `${data.memory_percent}%`
         memory_bar.style.width = `${data.memory_percent}%`
         setColor(memory_bar, data.memory_percent)
+        addChartData(memory_chart, `${hours}:${minutes}`, data.memory_percent)
 
         disk_used.textContent = `${data.disk_used.toFixed(1)}`
         disk_free.textContent = `${data.disk_free.toFixed(1)}`
@@ -197,14 +257,18 @@ async function update_stats(url) {
         setColor(disk_bar, data.disk_percent)
 
         power_val.textContent = `${data.power_watts.toFixed(2)}W`
+        addChartData(power_chart, `${hours}:${minutes}`, data.power_watts)
 
         conn_status.textContent = "Online"
         conn_status.style.color = "green"
         last_updated.textContent = `Last updated: ${hours}:${minutes}`
 
+        cpu_temp.textContent = `${data.cpu_temp}`
+        nvme_temp.textContent = `${data.nvme_temp}`
+
         process_table.innerHTML = '';
         const rows = data.top_processes.map(proc => `
-            <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors">
+            <tr class="border-b border-slate-800 hover:bg-slate-800 transition-colors">
                 <td class="py-2">${proc.pid}</td>
                 <td class="py-2">${proc.name}</td>
                 <td class="py-2 text-right">${proc.cpu_percent}%</td>

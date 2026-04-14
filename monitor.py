@@ -2,8 +2,9 @@
 Hardware / OS metric collector for Entropy Monitor.
 
 Wraps *psutil* calls behind a single ``Monitor`` class so the FastAPI
-layer only needs to call ``get_stats()``, ``get_top_processes()``, and
-``statistics()`` without knowing the underlying platform details.
+layer only needs to call ``get_stats()``, ``get_top_processes()``,
+``get_temps()``, and ``statistics()`` without knowing the underlying
+platform details.
 """
 
 import psutil
@@ -89,6 +90,47 @@ class Monitor:
 
         top_10 = sorted(processes, key=lambda x: x["cpu_percent"], reverse=True)[:10]
         self.stats["top_processes"] = top_10
+
+    def get_temps(self) -> None:
+        """Read CPU and NVMe temperatures via ``psutil.sensors_temperatures()``.
+
+        CPU temperature is resolved with a vendor-priority chain:
+        Intel (``coretemp``) -> AMD (``k10temp``) -> generic ACPI
+        (``acpitz``).  Only the first sensor entry (index 0) is used
+        from whichever source matches.
+
+        NVMe temperature is read from the ``nvme`` key if present.
+
+        Both values fall back to ``0.0`` when the relevant sensor group
+        is missing or its list is empty.
+        """
+        temps = psutil.sensors_temperatures()
+
+        if not temps:
+            self.stats["cpu_temp"] = 0.0
+            self.stats["nvme_temp"] = 0.0
+            return
+
+        try:
+            if "coretemp" in temps:
+                self.stats["cpu_temp"] = temps["coretemp"][0].current
+            elif "k10temp" in temps:
+                self.stats["cpu_temp"] = temps["k10temp"][0].current
+            elif "acpitz" in temps:
+                self.stats["cpu_temp"] = temps["acpitz"][0].current
+            else:
+                self.stats["cpu_temp"] = 0.0
+        except IndexError:
+            self.stats["cpu_temp"] = 0.0
+
+        try:
+            if "nvme" in temps:
+                self.stats["nvme_temp"] = temps["nvme"][0].current
+            else:
+                self.stats["nvme_temp"] = 0.0
+        except IndexError:
+            self.stats["nvme_temp"] = 0.0
+
 
     def statistics(self) -> dict:
         """Return the most recently collected metrics dictionary."""

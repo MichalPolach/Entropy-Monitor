@@ -62,6 +62,12 @@ class SystemStats(BaseModel):
         top_processes:    The 10 most CPU-hungry processes.
         power_watts:      Instantaneous battery power draw (W), or 0.0
                           when a battery sensor is unavailable.
+        cpu_temp:         CPU die temperature (°C), resolved from Intel
+                          ``coretemp``, AMD ``k10temp``, or ACPI
+                          ``acpitz`` — whichever is available first.
+                          ``0.0`` when no sensor is found.
+        nvme_temp:        NVMe drive temperature (°C), or ``0.0`` when
+                          no ``nvme`` sensor is exposed.
     """
     cpu: float
     memory_total: float
@@ -74,3 +80,5 @@ class SystemStats(BaseModel):
     disk_total: float
     top_processes: List[ProcessStats]
     power_watts: float
+    cpu_temp: float
+    nvme_temp: float
