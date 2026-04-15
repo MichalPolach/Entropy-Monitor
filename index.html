@@ -182,22 +182,42 @@
 
         </div>
 
-        <!-- ====== Top processes table ====== -->
-        <div class="mt-6 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-            <h2 class="text-xl font-bold mb-4 text-white">Resource Hogs</h2>
-            <table class="w-full text-left text-slate-300">
-                <thead>
-                    <tr class="border-b border-slate-800">
-                        <th class="py-2">PID</th>
-                        <th class="py-2">Name</th>
-                        <th class="py-2 text-right">CPU %</th>
-                        <th class="py-2 text-right">Memory (MB)</th>
-                    </tr>
-                </thead>
-                <!-- Rows are injected by app.js on each poll cycle -->
-                <tbody id="process-table">
-                </tbody>
-            </table>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <!-- ====== Top cpu processes table ====== -->
+            <div class="mt-6 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                <h2 class="text-xl font-bold mb-4 text-white">CPU Hogs</h2>
+                <table class="w-full text-left text-slate-300">
+                    <thead>
+                        <tr class="border-b border-slate-800">
+                            <th class="py-2">PID</th>
+                            <th class="py-2">Name</th>
+                            <th class="py-2 text-right">CPU %</th>
+                            <th class="py-2 text-right">Memory (MB)</th>
+                        </tr>
+                    </thead>
+                    <!-- Rows are injected by app.js on each poll cycle -->
+                    <tbody id="process-table-cpu">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ====== Top memory processes table ====== -->
+            <div class="mt-6 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                <h2 class="text-xl font-bold mb-4 text-white">Memory Hogs</h2>
+                <table class="w-full text-left text-slate-300">
+                    <thead>
+                        <tr class="border-b border-slate-800">
+                            <th class="py-2">PID</th>
+                            <th class="py-2">Name</th>
+                            <th class="py-2 text-right">CPU %</th>
+                            <th class="py-2 text-right">Memory (MB)</th>
+                        </tr>
+                    </thead>
+                    <!-- Rows are injected by app.js on each poll cycle -->
+                    <tbody id="process-table-mem">
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- ====== Footer ====== -->

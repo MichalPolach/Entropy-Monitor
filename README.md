@@ -15,7 +15,7 @@ Tracks CPU usage, RAM, disk space, battery power draw, and the top 10 most resou
 - **Memory** — used, available, and total RAM in GiB
 - **Disk** — root partition usage with used/free/total breakdown
 - **Power** — instantaneous battery draw in watts (Linux laptops)
-- **Top Processes** — 10 most CPU-intensive processes with PID, name, CPU %, and RSS memory
+- **Top Processes** — 10 most CPU-intensive and 10 most Memory-intesive processes with PID, name, CPU %, and RSS memory
 - **Auto-refresh** — frontend polls the backend at a configurable interval (default 6 s)
 - **Self-configuring frontend** — the JS client fetches its API URL and poll interval from a `/config` endpoint, keeping hard-coded values to a minimum
 
@@ -39,8 +39,8 @@ Tracks CPU usage, RAM, disk space, battery power draw, and the top 10 most resou
 
 ```bash
 # Clone the repo
-git clone https://github.com/<your-username>/sysmon.git
-cd sysmon
+git clone https://github.com/MichalPolach/Entropy-Monitor
+cd Entropy-Monitor
 
 # Create and activate a virtual environment
 python -m venv venv
@@ -125,7 +125,15 @@ Returns a full system telemetry snapshot.
   "disk_free": 136.5,
   "disk_total": 235.2,
   "power_watts": 14.52,
-  "top_processes": [
+  "top_processes_cpu": [
+    {
+      "pid": 1234,
+      "name": "firefox",
+      "cpu_percent": 8.5,
+      "memory_mb": 512.3
+    }
+  ],
+    "top_processes_mem": [
     {
       "pid": 1234,
       "name": "firefox",

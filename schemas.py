@@ -78,7 +78,8 @@ class SystemStats(BaseModel):
     disk_used: float
     disk_free: float
     disk_total: float
-    top_processes: List[ProcessStats]
+    top_processes_cpu: List[ProcessStats]
+    top_processes_mem: List[ProcessStats]
     power_watts: float
     cpu_temp: float
     nvme_temp: float

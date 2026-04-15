@@ -88,8 +88,10 @@ class Monitor:
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
 
-        top_10 = sorted(processes, key=lambda x: x["cpu_percent"], reverse=True)[:10]
-        self.stats["top_processes"] = top_10
+        top_10_cpu = sorted(processes, key=lambda x: x["cpu_percent"], reverse=True)[:10]
+        top_10_mem = sorted(processes, key=lambda x: x["memory_mb"], reverse=True)[:10]
+        self.stats["top_processes_cpu"] = top_10_cpu
+        self.stats["top_processes_mem"] = top_10_mem
 
     def get_temps(self) -> None:
         """Read CPU and NVMe temperatures via ``psutil.sensors_temperatures()``.

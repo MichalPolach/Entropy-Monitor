@@ -41,7 +41,8 @@ const last_updated = document.getElementById('last-updated');
 const cpu_temp = document.getElementById('cpu-temp-val');
 const nvme_temp = document.getElementById('nvme-temp-val');
 
-const process_table = document.getElementById('process-table');
+const process_table_cpu = document.getElementById('process-table-cpu');
+const process_table_mem = document.getElementById('process-table-mem');
 
 /* ------------------------------------------------------------------ */
 /*  Chart.js instances — rolling line graphs (last 20 data points)     */
@@ -266,8 +267,8 @@ async function update_stats(url) {
         cpu_temp.textContent = `${data.cpu_temp}`
         nvme_temp.textContent = `${data.nvme_temp}`
 
-        process_table.innerHTML = '';
-        const rows = data.top_processes.map(proc => `
+        process_table_cpu.innerHTML = '';
+        const rows_cpu = data.top_processes_cpu.map(proc => `
             <tr class="border-b border-slate-800 hover:bg-slate-800 transition-colors">
                 <td class="py-2">${proc.pid}</td>
                 <td class="py-2">${proc.name}</td>
@@ -275,7 +276,18 @@ async function update_stats(url) {
                 <td class="py-2 text-right">${proc.memory_mb.toFixed(1)} MB</td>
             </tr>
         `).join('');
-        process_table.innerHTML = rows;
+        process_table_cpu.innerHTML = rows_cpu;
+
+        process_table_mem.innerHTML = '';
+        const rows_mem = data.top_processes_mem.map(proc => `
+            <tr class="border-b border-slate-800 hover:bg-slate-800 transition-colors">
+                <td class="py-2">${proc.pid}</td>
+                <td class="py-2">${proc.name}</td>
+                <td class="py-2 text-right">${proc.cpu_percent}%</td>
+                <td class="py-2 text-right">${proc.memory_mb.toFixed(1)} MB</td>
+            </tr>
+        `).join('');
+        process_table_mem.innerHTML = rows_mem;
 
     } catch (error) {
         console.error("Error fetching records:", error);
