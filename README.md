@@ -9,6 +9,11 @@ Tracks CPU usage, RAM, disk space, battery power draw, and the top 10 most resou
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-CDN-38B2AC?logo=tailwind-css&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
+> [!NOTE]
+> This project currently only supports **Linux** systems.
+> It relies on Linux-specific paths like `/sys/class/thermal/` for temperature
+> sensors and `psutil.sensors_temperatures()` which may not work on Windows or macOS.
+
 ## Features
 
 - **CPU** — system-wide utilisation percentage with colour-coded progress bar
@@ -18,6 +23,8 @@ Tracks CPU usage, RAM, disk space, battery power draw, and the top 10 most resou
 - **Top Processes** — 10 most CPU-intensive and 10 most Memory-intesive processes with PID, name, CPU %, and RSS memory
 - **Auto-refresh** — frontend polls the backend at a configurable interval (default 6 s)
 - **Self-configuring frontend** — the JS client fetches its API URL and poll interval from a `/config` endpoint, keeping hard-coded values to a minimum
+
+![Entropy Monitor Dashboard](./example.png)
 
 ## Tech Stack
 

@@ -134,7 +134,7 @@ const power_chart = new Chart(power_chart_canvas, {
  * Points to the backend's /config endpoint which returns the actual
  * base URL and poll interval for all subsequent requests.
  */
-const initial_url = "http://127.0.0.1:8003/config"
+const initial_url = "http://127.0.0.1:8000/config"
 
 /** Mutable runtime configuration, overwritten by init() on startup. */
 let config = {
